@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #format info here: https://github.com/Dummiesman/angel-file-formats/blob/master/Midtown%20Madness%202/PSDL.md
 
 import math, json, sys, os
