@@ -119,7 +119,6 @@ def get_object(a, cVertices, mat_map, textures, perimeter, a2):
 
 
     elif a["type"] == "sliver":
-        return None
         left = cVertices[a["left"]]
         right = cVertices[a["right"]]
         topLeft = [left[0], a["top"], left[2]]
@@ -178,7 +177,6 @@ def get_object(a, cVertices, mat_map, textures, perimeter, a2):
 
 
     elif a["type"] == "facade":
-        return None
         rawLeft = cVertices[a["left"]]
         rawRight = cVertices[a["right"]]
         bottomLeft = [rawLeft[0], a["bottom"], rawLeft[2]]
@@ -193,7 +191,6 @@ def get_object(a, cVertices, mat_map, textures, perimeter, a2):
 
 
     elif a["type"] == "roof_triangle_fan":
-        return None
         rawVertices = [cVertices[i] for i in a["vertexRefs"]]
         vertices = [[v[0], a["height"], v[2]] for v in rawVertices]
         uvs = [[-0.25 * v[0], -0.25 * v[2]] for v in rawVertices]
