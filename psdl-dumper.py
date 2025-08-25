@@ -2,33 +2,26 @@
 
 #format info here: https://github.com/Dummiesman/angel-file-formats/blob/master/Midtown%20Madness%202/PSDL.md
 
-import math, json, sys, os
+import argparse, json, sys
 from utils.file_io import BinaryFileHelper
-from utils.gltf import to_gltf
-from utils.tex_dumper import dump_textures
 from psdl.attribute_parser import decode_attribute
 from psdl.geometry_expander.main import get_object
 
-# Process command line arguments
-dump_json = False
-with_textures = False
-argv = sys.argv[1:]
-if "-dump_json" in argv:
-    dump_json = True
-    argv.remove("-dump_json")
-
-if "-dump_textures" in argv:
-    with_textures = True
-    argv.remove("-dump_textures")
-
-if len(argv) != 1:
-    print("arguments: psdl file, flags: -dump_json, -dump_textures")
-    exit()
-
-in_psdl_file = argv[0]
+parser = argparse.ArgumentParser(
+  description = 'Export PSDL to JSON',
+  epilog = 'Based on SuperSecret\'s "PSDL Import" tool'
+)
+parser.add_argument('filename')
+parser.add_argument('-e', '--expand', action = 'store_true', help = 'Expand numeric references')
+parser.add_argument('-o', '--output', default='-', help = 'Name of the otput file (stdout if none)')
+parser.add_argument('-v', '--verbose', action = 'store_true', help = 'Verbose mode')
+args = parser.parse_args()
+in_psdl_file = args.filename
+verbose = args.verbose
 
 # Read the PSDL
-print("reading psdl...")
+if verbose:
+    print("reading psdl...")
 
 def read_perimeter_point(file):
     vertex = file.read_uint16()
@@ -88,7 +81,6 @@ paths = [read_paths(file) for i in range(nPaths)]
 file.close()
 
 # Sort the materials
-print("parsing psdl...")
 mat_map = {}
 out_materials = []
 for tex in textures:
@@ -126,8 +118,6 @@ for room in rooms:
     ri += 1
 
 # Convert the PSDL attributes to meshes
-print("expanding geometry...")
-
 roomsGeo = []
 for room in rooms2:
     roomGeo = {"id": room["id"]}
@@ -147,31 +137,20 @@ for room in rooms2:
     roomGeo["objects"] = objects
     roomsGeo.append(roomGeo)
 
-# Export to file
-print("exporting output...")
+if args.output == '-':
+    output = sys.stdout
+else:
+    output = open(args.output, 'w')
 
-if not os.path.exists("output"): os.mkdir("output")
-
-if dump_json:
+if args.expand:
+    obj1 = {}
+    obj1["rooms"] = roomsGeo
+    obj1s = json.dumps(obj1, indent=4)
+    output.write(obj1s)
+else:
     obj0 = {}
     obj0["vertices"] = cVertices
     obj0["textures"] = textures
     obj0["rooms"] = rooms2
     obj0s = json.dumps(obj0, indent=4)
-    with open("output/raw_psdl.json", "w") as outf:
-        outf.write(obj0s)
-
-    obj1 = {}
-    obj1["rooms"] = roomsGeo
-    obj1s = json.dumps(obj1, indent=4) 
-    with open("output/expanded_psdl.json", "w") as outf:
-        outf.write(obj1s)
-
-meshes = []
-for room in roomsGeo:
-    meshes.extend(room["objects"])
-
-with open("output/city.gltf", "wb") as outf:
-    outf.write(to_gltf(meshes, out_materials))
-
-if with_textures: dump_textures(out_materials)
+    output.write(obj0s)
